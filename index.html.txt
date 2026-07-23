@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FNL - FOOTBALL NINE LEAGUE App</title>
+    
+    <!-- PWA / iOS Web App Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FNL Portal">
+    <meta name="theme-color" content="#090d14">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23131822'/><circle cx='90' cy='90' r='75' fill='none' stroke='%2338bdf8' stroke-width='6'/><text x='90' y='110' font-family='sans-serif' font-size='60' font-weight='900' fill='%23f59e0b' text-anchor='middle'>FNL</text></svg>">
+
+    <!-- Web App Manifest (Data URI) -->
+    <link rel="manifest" href="data:application/manifest+json;utf8,{"name":"FOOTBALL NINE LEAGUE","short_name":"FNL","start_url":".","display":"standalone","background_color":"%23090d14","theme_color":"%23090d14","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23131822'/><text x='96' y='115' font-family='sans-serif' font-size='65' font-weight='900' fill='%23f59e0b' text-anchor='middle'>FNL</text></svg>","sizes":"192x192","type":"image/svg+xml"}]}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #090d14;
+            --bg-card: #131822;
+            --bg-elevated: #1d2433;
+            --bg-input: #0f131c;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(56, 189, 248, 0.3);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-gold: #f59e0b;
+            --accent-cyan: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --nav-height: 62px;
+            --header-height: 58px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Noto Sans JP', sans-serif;
+            line-height: 1.4;
+            padding-top: calc(var(--header-height) + env(safe-area-inset-top));
+            padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 1.2rem);
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* FIXED HEADER */
+        header {
+            background: rgba(19, 24, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: env(safe-area-inset-top) 1rem 0;
+            height: calc(var(--header-height) + env(safe-area-inset-top));
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .logo-badge {
+            background: linear-gradient(135deg, var(--accent-gold), #d97706);
+            color: #000;
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .admin-toggle-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .admin-toggle-btn.active {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.22s ease-out forwards;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SECTION TITLE */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .section-title {
+            font-family: 'Teko', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: var(--accent-cyan);
+            border-radius: 2px;
+        }
+
+        /* FILTER CHIPS */
+        .filter-scroll {
+            display: flex;
+            gap: 0.4rem;
+            overflow-x: auto;
+            padding-bottom: 0.6rem;
+            margin-bottom: 0.8rem;
+            scrollbar-width: none;
+        }
+
+        .filter-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chip.active {
+            background: var(--accent-cyan);
+            color: #000;
+            border-color: var(--accent-cyan);
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* HERO CARD */
+        .hero-banner {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-subtitle {
+            color: var(--accent-gold);
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-title {
+            font-family: 'Teko', sans-serif;
+            font-size: 2.2rem;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* MATCH CARD */
+        .match-card-mobile {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.8rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .match-card-mobile:active {
+            border-color: var(--accent-cyan);
+        }
+
+        .match-info-side {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 54px;
+        }
+
+        .match-date-badge {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .match-sec-badge {
+            font-size: 0.65rem;
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .match-teams-center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 0 0.2rem;
+        }
+
+        .match-team-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .match-team-box.home { justify-content: flex-end; text-align: right; }
+        .match-team-box.away { justify-content: flex-start; text-align: left; }
+
+        .match-team-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .match-score-pill {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-main);
+            min-width: 46px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .match-score-pill.finished {
+            color: var(--accent-cyan);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* LOGO AVATARS */
+        .team-logo-img {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: contain;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        .team-logo-lg {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            object-fit: contain;
+            margin: 0 auto 0.5rem;
+            display: block;
+        }
+
+        /* STANDINGS TABLE */
+        table.mobile-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        table.mobile-table th {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            padding: 0.5rem 0.2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        table.mobile-table td {
+            padding: 0.65rem 0.2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            text-align: center;
+        }
+
+        .team-col {
+            text-align: left !important;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rank-num {
+            font-family: 'Teko', sans-serif;
+            font-size: 1.15rem;
+            font-weight: bold;
+            width: 22px;
+            color: var(--text-muted);
+        }
+
+        .rank-1 { color: var(--accent-gold); }
+        .rank-2 { color: var(--accent-cyan); }
+        .rank-3 { color: var(--accent-green); }
+
+        .pts-badge {
+            font-family: 'Teko', sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-cyan);
+        }
+
+        /* FORM BADGES */
+        .form-badge {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            border-radius: 50%;
+            font-size: 0.6rem;
+            font-weight: bold;
+            text-align: center;
+            color: #000;
+            margin-right: 2px;
+        }
+
+        .form-w { background: var(--accent-green); }
+        .form-d { background: var(--accent-gold); }
+        .form-l { background: var(--accent-red); color: #fff; }
+
+        /* NEWS LIST */
+        .news-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-date {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            min-width: 55px;
+        }
+
+        .news-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        /* ADMIN FORM */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+            font-weight: 700;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-primary {
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:active { opacity: 0.8; }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        /* BOTTOM NAV BAR */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+            background: rgba(19, 24, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.65rem;
+            font-weight: 700;
+            width: 20%;
+            height: 100%;
+            gap: 3px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--accent-cyan);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        /* BOTTOM SHEET MODAL */
+        .sheet-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .sheet-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sheet-content {
+            background: var(--bg-card);
+            width: 100%;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 1.5rem;
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+            border-top: 1px solid var(--border-color);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .sheet-overlay.active .sheet-content {
+            transform: translateY(0);
+        }
+
+        .sheet-bar {
+            width: 36px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin: 0 auto 1.2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-fin { background: rgba(56, 189, 248, 0.2); color: var(--accent-cyan); }
+        .status-up { background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); }
+    </style>
+</head>
+<body>
+
+    <!-- FIXED HEADER -->
+    <header>
+        <div class="logo">
+            <span class="logo-badge">FNL</span>
+            <span>FOOTBALL NINE</span>
+        </div>
+        <button class="admin-toggle-btn" id="admin-mode-btn" onclick="toggleAdminMode()">
+            <span>⚙️</span>
+            <span id="admin-btn-text">管理モード</span>
+        </button>
+    </header>
+
+    <!-- MAIN PAGES CONTAINER -->
+    <main class="container">
+        
+        <!-- PAGE 1: HOME -->
+        <section id="page-home" class="page active">
+            <div class="hero-banner">
+                <div class="hero-subtitle">SEASON 1 - 2026</div>
+                <div class="hero-title">CHALLENGE FOR TOP</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">全9チーム 全18マッチウィーク公式ポータル</p>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">FEATURED MATCH</div>
+            </div>
+            <div id="home-featured-match">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="section-header" style="margin-top: 1.5rem;">
+                <div class="section-title">TOPICS</div>
+            </div>
+            <div class="card" id="home-news-preview">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 2: STANDINGS -->
+        <section id="page-standings" class="page">
+            <div class="section-header">
+                <div class="section-title">LEAGUE TABLE</div>
+            </div>
+
+            <div class="filter-scroll">
+                <button class="chip active" onclick="switchStandingsFilter('total', this)">順位表</button>
+                <button class="chip" onclick="switchStandingsFilter('scorers', this)">得点ランキング</button>
+            </div>
+
+            <div class="card" id="standings-card">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 3: MATCHES -->
+        <section id="page-matches" class="page">
+            <div class="section-header">
+                <div class="section-title">FIXTURES & RESULTS</div>
+            </div>
+
+            <div class="filter-scroll" id="matchweek-chips">
+                <!-- 18 Matchweek Chips Injected via JS -->
+            </div>
+
+            <div id="matches-list">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 4: TEAMS -->
+        <section id="page-teams" class="page">
+            <div class="section-header">
+                <div class="section-title">CLUBS</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem;" id="teams-grid">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 5: ADMIN / SETTINGS -->
+        <section id="page-admin" class="page">
+            <div class="section-header">
+                <div class="section-title">LEAGUE MANAGEMENT</div>
+            </div>
+
+            <!-- NEWS POST -->
+            <div class="card">
+                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: var(--accent-cyan);">📢 お知らせ新規投稿</h3>
+                <div class="form-group">
+                    <label class="form-label">タイトル</label>
+                    <input type="text" id="admin-news-title" class="form-input" placeholder="例: 第3節の開始時間が更新されました">
+                </div>
+                <button class="btn-primary" onclick="addNewsPost()">お知らせを投稿</button>
+            </div>
+
+            <!-- SCORER ADDITION -->
+            <div class="card">
+                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: var(--accent-gold);">⚽ 得点登録</h3>
+                <div class="form-group">
+                    <label class="form-label">選手名</label>
+                    <input type="text" id="admin-scorer-name" class="form-input" placeholder="例: Koshi Striker">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">所属チーム</label>
+                    <select id="admin-scorer-team" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">得点数追加</label>
+                    <input type="number" id="admin-scorer-goals" class="form-input" value="1" min="1">
+                </div>
+                <button class="btn-primary" onclick="addScorerGoal()">得点を追加・更新</button>
+            </div>
+
+            <!-- DATA RESET -->
+            <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                <h3 style="font-size: 1rem; margin-bottom: 0.8rem; color: var(--accent-red);">⚙️ データリセット</h3>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom: 1rem;">入力スコアやお知らせデータを初期状態に戻します。</p>
+                <button class="btn-danger" onclick="resetLeagueData()">全データを初期化</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="navigateTo('home', this)">
+            <span class="nav-icon">🏠</span>
+            <span>ホーム</span>
+        </div>
+        <div class="nav-item" id="nav-standings" onclick="navigateTo('standings', this)">
+            <span class="nav-icon">🏆</span>
+            <span>順位表</span>
+        </div>
+        <div class="nav-item" id="nav-matches" onclick="navigateTo('matches', this)">
+            <span class="nav-icon">⚽</span>
+            <span>日程</span>
+        </div>
+        <div class="nav-item" id="nav-teams" onclick="navigateTo('teams', this)">
+            <span class="nav-icon">🛡️</span>
+            <span>チーム</span>
+        </div>
+        <div class="nav-item" id="nav-admin" onclick="navigateTo('admin', this)">
+            <span class="nav-icon">⚙️</span>
+            <span>管理</span>
+        </div>
+    </nav>
+
+    <!-- BOTTOM SHEET MODAL -->
+    <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet(event)">
+        <div class="sheet-content">
+            <div class="sheet-bar"></div>
+            <div id="sheet-body">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // SVG Badge Generator
+        function makeSvgBadge(text, c1, c2, shape = 'shield') {
+            let svg = '';
+            if (shape === 'shield') {
+                svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><path d="M50,6 L86,22 L86,54 C86,74 50,94 50,94 C50,94 14,74 14,54 L14,22 Z" fill="url(#g)" stroke="#ffffff" stroke-width="3"/><text x="50" y="58" font-family="sans-serif" font-size="26" font-weight="900" fill="#ffffff" text-anchor="middle">${text}</text></svg>`;
+            } else {
+                svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><circle cx="50" cy="50" r="44" fill="url(#g)" stroke="#ffffff" stroke-width="4"/><circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/><text x="50" y="59" font-family="sans-serif" font-size="24" font-weight="900" fill="#ffffff" text-anchor="middle">${text}</text></svg>`;
+            }
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+
+        // OFFICIAL 9 TEAMS MASTER
+        const DEFAULT_TEAMS = [
+            { id: '1', name: 'FC Koshi', tag: 'KOS', logo: makeSvgBadge('KOS', '#ef4444', '#991b1b', 'shield'), captain: 'Koshi' },
+            { id: '2', name: 'BAYASHI JAPAN', tag: 'BAY', logo: makeSvgBadge('BAY', '#3b82f6', '#1e3a8a', 'circle'), captain: 'Bayashi' },
+            { id: '3', name: 'MGR United', tag: 'MGR', logo: makeSvgBadge('MGR', '#10b981', '#064e3b', 'shield'), captain: 'Manager' },
+            { id: '4', name: 'Manchester Cow', tag: 'MNC', logo: makeSvgBadge('MNC', '#f59e0b', '#78350f', 'circle'), captain: 'Ushi' },
+            { id: '5', name: 'Katsukou FC', tag: 'KFC', logo: makeSvgBadge('KFC', '#8b5cf6', '#4c1d95', 'shield'), captain: 'Katsu' },
+            { id: '6', name: '小金井3KSC', tag: 'K3K', logo: makeSvgBadge('K3K', '#ec4899', '#831843', 'circle'), captain: 'Koganei' },
+            { id: '7', name: 'YSC吉田', tag: 'YSC', logo: makeSvgBadge('YSC', '#06b6d4', '#164e63', 'shield'), captain: 'Yoshida' },
+            { id: '8', name: 'Kasuga United', tag: 'KAS', logo: makeSvgBadge('KAS', '#84cc16', '#3f6212', 'circle'), captain: 'Kasuga' },
+            { id: '9', name: 'FC ARG', tag: 'ARG', logo: makeSvgBadge('ARG', '#64748b', '#0f172a', 'shield'), captain: 'Leo' }
+        ];
+
+        // FULL 18 MATCHWEEKS MASTER DATA (72 MATCHES)
+        const MASTER_MATCHES = [
+            // MW 1
+            { id: 101, mw: 1, home: 'MGR United', away: 'FC Koshi', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 102, mw: 1, home: '小金井3KSC', away: 'Katsukou FC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 103, mw: 1, home: 'YSC吉田', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 104, mw: 1, home: 'BAYASHI JAPAN', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 2
+            { id: 201, mw: 2, home: 'Katsukou FC', away: 'Kasuga United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 202, mw: 2, home: 'Manchester Cow', away: 'FC Koshi', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 203, mw: 2, home: 'FC ARG', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 204, mw: 2, home: 'YSC吉田', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 3
+            { id: 301, mw: 3, home: 'FC Koshi', away: 'Kasuga United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 302, mw: 3, home: '小金井3KSC', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 303, mw: 3, home: 'YSC吉田', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 304, mw: 3, home: 'MGR United', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 4
+            { id: 401, mw: 4, home: 'FC Koshi', away: '小金井3KSC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 402, mw: 4, home: 'YSC吉田', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 403, mw: 4, home: 'Katsukou FC', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 404, mw: 4, home: 'Kasuga United', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 5
+            { id: 501, mw: 5, home: 'FC Koshi', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 502, mw: 5, home: '小金井3KSC', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 503, mw: 5, home: 'Katsukou FC', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 504, mw: 5, home: 'Kasuga United', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 6
+            { id: 601, mw: 6, home: 'Katsukou FC', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 602, mw: 6, home: 'Kasuga United', away: '小金井3KSC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 603, mw: 6, home: 'Manchester Cow', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 604, mw: 6, home: 'FC Koshi', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 7
+            { id: 701, mw: 7, home: 'Kasuga United', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 702, mw: 7, home: 'Manchester Cow', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 703, mw: 7, home: 'FC Koshi', away: 'Katsukou FC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 704, mw: 7, home: '小金井3KSC', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 8
+            { id: 801, mw: 8, home: '小金井3KSC', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 802, mw: 8, home: 'Katsukou FC', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 803, mw: 8, home: 'Kasuga United', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 804, mw: 8, home: 'FC Koshi', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 9
+            { id: 901, mw: 9, home: '小金井3KSC', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 902, mw: 9, home: 'Katsukou FC', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 903, mw: 9, home: 'Manchester Cow', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 904, mw: 9, home: 'Kasuga United', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 10
+            { id: 1001, mw: 10, home: 'FC Koshi', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1002, mw: 10, home: '小金井3KSC', away: 'Katsukou FC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1003, mw: 10, home: 'Manchester Cow', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1004, mw: 10, home: 'FC ARG', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 11
+            { id: 1101, mw: 11, home: 'Kasuga United', away: 'Katsukou FC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1102, mw: 11, home: 'FC Koshi', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1103, mw: 11, home: 'FC ARG', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1104, mw: 11, home: 'YSC吉田', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 12
+            { id: 1201, mw: 12, home: 'FC Koshi', away: 'Kasuga United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1202, mw: 12, home: '小金井3KSC', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1203, mw: 12, home: 'YSC吉田', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1204, mw: 12, home: 'MGR United', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 13
+            { id: 1301, mw: 13, home: 'FC Koshi', away: '小金井3KSC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1302, mw: 13, home: 'YSC吉田', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1303, mw: 13, home: 'Katsukou FC', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1304, mw: 13, home: 'Kasuga United', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 14
+            { id: 1401, mw: 14, home: 'FC Koshi', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1402, mw: 14, home: '小金井3KSC', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1403, mw: 14, home: 'Katsukou FC', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1404, mw: 14, home: 'Kasuga United', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 15
+            { id: 1501, mw: 15, home: 'Katsukou FC', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1502, mw: 15, home: 'Kasuga United', away: '小金井3KSC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1503, mw: 15, home: 'Manchester Cow', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1504, mw: 15, home: 'FC Koshi', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 16
+            { id: 1601, mw: 16, home: 'Kasuga United', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1602, mw: 16, home: 'Manchester Cow', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1603, mw: 16, home: 'FC Koshi', away: 'Katsukou FC', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1604, mw: 16, home: '小金井3KSC', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 17
+            { id: 1701, mw: 17, home: '小金井3KSC', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1702, mw: 17, home: 'Katsukou FC', away: 'Manchester Cow', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1703, mw: 17, home: 'Kasuga United', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1704, mw: 17, home: 'FC Koshi', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' },
+            // MW 18
+            { id: 1801, mw: 18, home: '小金井3KSC', away: 'BAYASHI JAPAN', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1802, mw: 18, home: 'Katsukou FC', away: 'YSC吉田', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1803, mw: 18, home: 'Manchester Cow', away: 'MGR United', homeScore: null, awayScore: null, status: 'upcoming' },
+            { id: 1804, mw: 18, home: 'Kasuga United', away: 'FC ARG', homeScore: null, awayScore: null, status: 'upcoming' }
+        ];
+
+        const DEFAULT_SCORERS = [];
+        const DEFAULT_NEWS = [
+            { date: '2026.07.23', title: 'FNL Season 1 全18マッチウィーク公式日程が確定！' },
+            { date: '2026.07.20', title: '【開幕直前】各クラブ主将による目標コメント発表' }
+        ];
+
+        // APP STATE WITH LOCAL STORAGE
+        let appState = {
+            adminMode: false,
+            teams: DEFAULT_TEAMS,
+            matches: JSON.parse(localStorage.getItem('fnl_mw_matches_v2')) || MASTER_MATCHES,
+            scorers: JSON.parse(localStorage.getItem('fnl_scorers_v2')) || DEFAULT_SCORERS,
+            news: JSON.parse(localStorage.getItem('fnl_news_v2')) || DEFAULT_NEWS,
+            selectedMwFilter: 'all'
+        };
+
+        function saveState() {
+            localStorage.setItem('fnl_mw_matches_v2', JSON.stringify(appState.matches));
+            localStorage.setItem('fnl_scorers_v2', JSON.stringify(appState.scorers));
+            localStorage.setItem('fnl_news_v2', JSON.stringify(appState.news));
+        }
+
+        function resetLeagueData() {
+            if (confirm('入力された全試合スコアとお知らせを初期状態にリセットしますか？')) {
+                localStorage.clear();
+                appState.matches = MASTER_MATCHES;
+                appState.scorers = DEFAULT_SCORERS;
+                appState.news = DEFAULT_NEWS;
+                saveState();
+                location.reload();
+            }
+        }
+
+        // AUTOMATIC STANDINGS ENGINE
+        function calculateStandings() {
+            const standingsMap = {};
+
+            appState.teams.forEach(t => {
+                standingsMap[t.name] = {
+                    name: t.name,
+                    tag: t.tag,
+                    logo: t.logo,
+                    captain: t.captain,
+                    p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0,
+                    form: []
+                };
+            });
+
+            appState.matches.forEach(m => {
+                if (m.status === 'finished' && m.homeScore !== null && m.awayScore !== null) {
+                    const home = standingsMap[m.home];
+                    const away = standingsMap[m.away];
+
+                    if (home && away) {
+                        home.p++;
+                        away.p++;
+
+                        home.gf += m.homeScore;
+                        home.ga += m.awayScore;
+                        away.gf += m.awayScore;
+                        away.ga += m.homeScore;
+
+                        if (m.homeScore > m.awayScore) {
+                            home.w++;
+                            home.pts += 3;
+                            away.l++;
+                            home.form.push('W');
+                            away.form.push('L');
+                        } else if (m.homeScore < m.awayScore) {
+                            away.w++;
+                            away.pts += 3;
+                            home.l++;
+                            away.form.push('W');
+                            home.form.push('L');
+                        } else {
+                            home.d++;
+                            away.d++;
+                            home.pts += 1;
+                            away.pts += 1;
+                            home.form.push('D');
+                            away.form.push('D');
+                        }
+                    }
+                }
+            });
+
+            const standingsList = Object.values(standingsMap).map(t => {
+                t.gd = t.gf - t.ga;
+                return t;
+            });
+
+            standingsList.sort((a, b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (b.gd !== a.gd) return b.gd - a.gd;
+                if (b.gf !== a.gf) return b.gf - a.gf;
+                return b.w - a.w;
+            });
+
+            standingsList.forEach((t, idx) => {
+                t.rank = idx + 1;
+            });
+
+            return standingsList;
+        }
+
+        function getTeamLogo(name) {
+            const t = appState.teams.find(item => item.name === name);
+            return t ? t.logo : makeSvgBadge('FNL', '#334155', '#0f172a', 'shield');
+        }
+
+        // PAGE NAVIGATION
+        function navigateTo(pageId, navEl) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            navEl.classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleAdminMode() {
+            appState.adminMode = !appState.adminMode;
+            const btn = document.getElementById('admin-mode-btn');
+            const txt = document.getElementById('admin-btn-text');
+
+            if (appState.adminMode) {
+                btn.classList.add('active');
+                txt.innerText = '編集ON';
+            } else {
+                btn.classList.remove('active');
+                txt.innerText = '管理モード';
+            }
+
+            renderMatches(appState.selectedMwFilter);
+            renderFeaturedMatch();
+        }
+
+        // RENDER MATCHWEEK CHIPS
+        function renderMatchweekChips() {
+            const wrap = document.getElementById('matchweek-chips');
+            let html = `<button class="chip active" onclick="filterMatches('all', this)">全試合</button>`;
+            for (let i = 1; i <= 18; i++) {
+                html += `<button class="chip" onclick="filterMatches(${i}, this)">MW ${i}</button>`;
+            }
+            wrap.innerHTML = html;
+        }
+
+        // RENDER FEATURED MATCH
+        function renderFeaturedMatch() {
+            const container = document.getElementById('home-featured-match');
+            const target = appState.matches.find(m => m.status === 'upcoming') || appState.matches[0];
+
+            if (!target) return;
+
+            const homeLogo = getTeamLogo(target.home);
+            const awayLogo = getTeamLogo(target.away);
+            const scoreText = target.status === 'finished' ? `${target.homeScore} - ${target.awayScore}` : 'VS';
+
+            container.innerHTML = `
+                <div class="match-card-mobile" style="background: var(--bg-card); border-color: var(--accent-gold);" onclick="openMatchEditSheet(${target.id})">
+                    <div class="match-info-side">
+                        <span class="match-sec-badge">MW ${target.mw}</span>
+                        <span class="match-date-badge">${target.status === 'finished' ? '終了' : '予定'}</span>
+                    </div>
+                    <div class="match-teams-center">
+                        <div class="match-team-box home">
+                            <span class="match-team-name">${target.home}</span>
+                            <img src="${homeLogo}" class="team-logo-img" alt="${target.home}">
+                        </div>
+                        <span class="match-score-pill" style="color:var(--accent-gold);">${scoreText}</span>
+                        <div class="match-team-box away">
+                            <img src="${awayLogo}" class="team-logo-img" alt="${target.away}">
+                            <span class="match-team-name">${target.away}</span>
+                        </div>
+                    </div>
+                    ${appState.adminMode ? '<span style="font-size:0.7rem; color:var(--accent-gold);">✏️</span>' : ''}
+                </div>
+            `;
+        }
+
+        // RENDER STANDINGS TABLE
+        function renderStandings(type = 'total') {
+            const card = document.getElementById('standings-card');
+
+            if (type === 'scorers') {
+                if (appState.scorers.length === 0) {
+                    card.innerHTML = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">登録された得点データがありません。<br>管理画面から得点選手を追加できます。</div>`;
+                    return;
+                }
+                const sortedScorers = [...appState.scorers].sort((a, b) => b.goals - a.goals);
+                let html = `<table class="mobile-table">
+                    <thead><tr><th>#</th><th style="text-align:left">選手</th><th>所属</th><th>得点</th></tr></thead>
+                    <tbody>`;
+                sortedScorers.forEach((s, idx) => {
+                    const logo = getTeamLogo(s.team);
+                    html += `<tr>
+                        <td class="rank-num">${idx + 1}</td>
+                        <td class="team-col">
+                            <img src="${logo}" class="team-logo-img" alt="${s.team}">
+                            <span>${s.name}</span>
+                        </td>
+                        <td style="color:var(--text-muted); font-size:0.75rem;">${s.team}</td>
+                        <td class="pts-badge">${s.goals}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+                card.innerHTML = html;
+                return;
+            }
+
+            const standings = calculateStandings();
+            let html = `<table class="mobile-table">
+                <thead><tr><th>#</th><th style="text-align:left">チーム</th><th>試</th><th>勝</th><th>差</th><th>点</th></tr></thead>
+                <tbody>`;
+            
+            standings.forEach(t => {
+                html += `<tr onclick="openTeamSheet('${t.name}')">
+                    <td class="rank-num rank-${t.rank}">${t.rank}</td>
+                    <td>
+                        <div class="team-col">
+                            <img src="${t.logo}" class="team-logo-img" alt="${t.name}">
+                            <span>${t.name}</span>
+                        </div>
+                    </td>
+                    <td>${t.p}</td>
+                    <td>${t.w}</td>
+                    <td>${t.gd > 0 ? '+' + t.gd : t.gd}</td>
+                    <td class="pts-badge">${t.pts}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+            card.innerHTML = html;
+        }
+
+        // RENDER MATCHES
+        function renderMatches(filter = 'all') {
+            appState.selectedMwFilter = filter;
+            const list = document.getElementById('matches-list');
+            const filtered = filter === 'all' ? appState.matches : appState.matches.filter(m => m.mw === filter);
+
+            let html = '';
+            filtered.forEach(m => {
+                const homeLogo = getTeamLogo(m.home);
+                const awayLogo = getTeamLogo(m.away);
+                const isFin = m.status === 'finished';
+                const scoreDisplay = isFin ? `${m.homeScore} - ${m.awayScore}` : 'VS';
+                const scoreClass = isFin ? 'finished' : '';
+
+                html += `<div class="match-card-mobile" onclick="openMatchEditSheet(${m.id})">
+                    <div class="match-info-side">
+                        <span class="match-sec-badge">MW ${m.mw}</span>
+                        <span class="match-date-badge">${isFin ? '終了' : '予定'}</span>
+                    </div>
+                    <div class="match-teams-center">
+                        <div class="match-team-box home">
+                            <span class="match-team-name">${m.home}</span>
+                            <img src="${homeLogo}" class="team-logo-img" alt="${m.home}">
+                        </div>
+                        <span class="match-score-pill ${scoreClass}">${scoreDisplay}</span>
+                        <div class="match-team-box away">
+                            <img src="${awayLogo}" class="team-logo-img" alt="${m.away}">
+                            <span class="match-team-name">${m.away}</span>
+                        </div>
+                    </div>
+                    ${appState.adminMode ? '<span style="font-size:0.7rem; color:var(--accent-gold); margin-left:4px;">✏️</span>' : ''}
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        // RENDER TEAMS GRID
+        function renderTeams() {
+            const grid = document.getElementById('teams-grid');
+            const standings = calculateStandings();
+
+            let html = '';
+            appState.teams.forEach(t => {
+                const st = standings.find(s => s.name === t.name) || { pts: 0, rank: '-' };
+                html += `<div class="card" style="margin-bottom:0; text-align:center; padding:1.2rem 0.8rem; cursor:pointer;" onclick="openTeamSheet('${t.name}')">
+                    <img src="${t.logo}" class="team-logo-lg" alt="${t.name}">
+                    <div style="font-weight:700; font-size:0.85rem; color:var(--text-main);">${t.name}</div>
+                    <div style="font-size:0.7rem; color:var(--accent-cyan); margin-top:2px;">順位: ${st.rank}位 (${st.pts}pt)</div>
+                </div>`;
+            });
+            grid.innerHTML = html;
+        }
+
+        // RENDER NEWS
+        function renderNews() {
+            const homeWrap = document.getElementById('home-news-preview');
+            let html = '';
+
+            appState.news.forEach(n => {
+                html += `<div class="news-item">
+                    <div class="news-date">${n.date}</div>
+                    <div class="news-title">${n.title}</div>
+                </div>`;
+            });
+
+            homeWrap.innerHTML = html;
+        }
+
+        // EDIT MATCH SHEET MODAL
+        function openMatchEditSheet(matchId) {
+            const m = appState.matches.find(item => item.id === matchId);
+            if (!m) return;
+
+            const body = document.getElementById('sheet-body');
+            const homeLogo = getTeamLogo(m.home);
+            const awayLogo = getTeamLogo(m.away);
+
+            if (appState.adminMode) {
+                body.innerHTML = `
+                    <div style="text-align:center; margin-bottom:1rem;">
+                        <span class="status-badge ${m.status === 'finished' ? 'status-fin' : 'status-up'}">MW ${m.mw} スコア編集</span>
+                        <h3 style="font-family:'Teko'; font-size:1.8rem; margin-top:0.2rem;">${m.home} VS ${m.away}</h3>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-around; align-items:center; background:var(--bg-body); padding:1rem; border-radius:12px; margin-bottom:1.2rem;">
+                        <div style="text-align:center;">
+                            <img src="${homeLogo}" class="team-logo-img" style="width:36px; height:36px; margin-bottom:4px;" alt="">
+                            <div style="font-size:0.75rem; font-weight:bold;">${m.home}</div>
+                            <input type="number" id="edit-home-score" class="form-input" style="width:60px; text-align:center; font-size:1.4rem; font-weight:bold; margin-top:0.4rem;" value="${m.homeScore !== null ? m.homeScore : 0}">
+                        </div>
+                        <div style="font-family:'Teko'; font-size:2rem; font-weight:bold; color:var(--text-muted);">-</div>
+                        <div style="text-align:center;">
+                            <img src="${awayLogo}" class="team-logo-img" style="width:36px; height:36px; margin-bottom:4px;" alt="">
+                            <div style="font-size:0.75rem; font-weight:bold;">${m.away}</div>
+                            <input type="number" id="edit-away-score" class="form-input" style="width:60px; text-align:center; font-size:1.4rem; font-weight:bold; margin-top:0.4rem;" value="${m.awayScore !== null ? m.awayScore : 0}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">試合ステータス</label>
+                        <select id="edit-match-status" class="form-select">
+                            <option value="finished" ${m.status === 'finished' ? 'selected' : ''}>試合終了 (順位表に反映)</option>
+                            <option value="upcoming" ${m.status === 'upcoming' ? 'selected' : ''}>未消化 / 予定</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveMatchScore(${m.id})">結果を保存する</button>
+                `;
+            } else {
+                body.innerHTML = `
+                    <div style="text-align:center;">
+                        <span class="status-badge ${m.status === 'finished' ? 'status-fin' : 'status-up'}">${m.status === 'finished' ? '試合終了' : '試合予定'}</span>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;">マッチウィーク ${m.mw}</div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-body); padding:1.2rem 1rem; border-radius:12px; margin:1rem 0;">
+                        <div style="flex:1; text-align:center;">
+                            <img src="${homeLogo}" class="team-logo-lg" style="width:48px; height:48px;" alt="${m.home}">
+                            <div style="font-weight:bold; font-size:0.85rem;">${m.home}</div>
+                        </div>
+                        <div style="font-family:'Teko'; font-size:2.8rem; font-weight:bold; color:var(--accent-cyan); padding:0 0.5rem;">
+                            ${m.status === 'finished' ? `${m.homeScore} - ${m.awayScore}` : 'VS'}
+                        </div>
+                        <div style="flex:1; text-align:center;">
+                            <img src="${awayLogo}" class="team-logo-lg" style="width:48px; height:48px;" alt="${m.away}">
+                            <div style="font-weight:bold; font-size:0.85rem;">${m.away}</div>
+                        </div>
+                    </div>
+
+                    <p style="text-align:center; font-size:0.75rem; color:var(--text-muted);">※右上「管理モード」ボタンをONにするとスコアを更新できます。</p>
+                `;
+            }
+
+            document.getElementById('sheet-overlay').classList.add('active');
+        }
+
+        // SAVE MATCH SCORE
+        function saveMatchScore(matchId) {
+            const m = appState.matches.find(item => item.id === matchId);
+            if (!m) return;
+
+            const homeVal = parseInt(document.getElementById('edit-home-score').value, 10);
+            const awayVal = parseInt(document.getElementById('edit-away-score').value, 10);
+            const statusVal = document.getElementById('edit-match-status').value;
+
+            m.homeScore = isNaN(homeVal) ? 0 : homeVal;
+            m.awayScore = isNaN(awayVal) ? 0 : awayVal;
+            m.status = statusVal;
+
+            saveState();
+            renderStandings('total');
+            renderMatches(appState.selectedMwFilter);
+            renderFeaturedMatch();
+            closeSheetDirect();
+        }
+
+        // TEAM DETAIL SHEET MODAL
+        function openTeamSheet(name) {
+            const standings = calculateStandings();
+            const t = standings.find(item => item.name === name);
+            if (!t) return;
+
+            const body = document.getElementById('sheet-body');
+            
+            let formBadgesHtml = '';
+            t.form.forEach(f => {
+                const cls = f === 'W' ? 'form-w' : f === 'D' ? 'form-d' : 'form-l';
+                formBadgesHtml += `<span class="form-badge ${cls}">${f}</span>`;
+            });
+
+            body.innerHTML = `
+                <div style="text-align:center;">
+                    <img src="${t.logo}" class="team-logo-lg" style="width:72px; height:72px;" alt="${t.name}">
+                    <h3 style="font-family:'Teko'; font-size:2rem; line-height:1; margin-top:0.3rem;">${t.name}</h3>
+                    <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.2rem;">キャプテン: ${t.captain}</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.4rem; text-align:center; background:var(--bg-body); padding:0.8rem; border-radius:10px; margin-bottom:1rem;">
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">順位</div>
+                        <div style="font-family:'Teko'; font-size:1.4rem; color:var(--accent-gold); font-weight:bold;">${t.rank}位</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">勝点</div>
+                        <div style="font-family:'Teko'; font-size:1.4rem; color:var(--accent-cyan); font-weight:bold;">${t.pts}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">勝-分-負</div>
+                        <div style="font-family:'Teko'; font-size:1.2rem; font-weight:bold;">${t.w}-${t.d}-${t.l}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">得失点</div>
+                        <div style="font-family:'Teko'; font-size:1.4rem; font-weight:bold;">${t.gd > 0 ? '+' + t.gd : t.gd}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">直近のフォーム: </span>
+                    <span>${formBadgesHtml || '未消化'}</span>
+                </div>
+            `;
+
+            document.getElementById('sheet-overlay').classList.add('active');
+        }
+
+        // ADD NEWS
+        function addNewsPost() {
+            const titleInput = document.getElementById('admin-news-title');
+            if (!titleInput.value.trim()) return;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+
+            appState.news.unshift({
+                date: dateStr,
+                title: titleInput.value.trim()
+            });
+
+            titleInput.value = '';
+            saveState();
+            renderNews();
+            alert('お知らせを投稿しました！');
+        }
+
+        // ADD SCORER
+        function addScorerGoal() {
+            const nameInput = document.getElementById('admin-scorer-name');
+            const teamSelect = document.getElementById('admin-scorer-team');
+            const goalsInput = document.getElementById('admin-scorer-goals');
+
+            if (!nameInput.value.trim()) return;
+
+            const scorerName = nameInput.value.trim();
+            const teamName = teamSelect.value;
+            const addGoals = parseInt(goalsInput.value, 10) || 1;
+
+            const existing = appState.scorers.find(s => s.name === scorerName && s.team === teamName);
+            if (existing) {
+                existing.goals += addGoals;
+            } else {
+                appState.scorers.push({
+                    id: Date.now(),
+                    name: scorerName,
+                    team: teamName,
+                    goals: addGoals
+                });
+            }
+
+            nameInput.value = '';
+            saveState();
+            renderStandings('scorers');
+            alert('得点記録を更新しました！');
+        }
+
+        function populateTeamDropdown() {
+            const select = document.getElementById('admin-scorer-team');
+            if (!select) return;
+            select.innerHTML = '';
+            appState.teams.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.name;
+                opt.innerText = t.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function closeSheet(e) {
+            if (e.target.id === 'sheet-overlay') {
+                closeSheetDirect();
+            }
+        }
+
+        function closeSheetDirect() {
+            document.getElementById('sheet-overlay').classList.remove('active');
+        }
+
+        function switchStandingsFilter(type, el) {
+            el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderStandings(type);
+        }
+
+        function filterMatches(sec, el) {
+            el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderMatches(sec);
+        }
+
+        // INIT
+        window.onload = function() {
+            renderMatchweekChips();
+            renderFeaturedMatch();
+            renderStandings('total');
+            renderMatches('all');
+            renderTeams();
+            renderNews();
+            populateTeamDropdown();
+        };
+    </script>
+</body>
+</html>
+
